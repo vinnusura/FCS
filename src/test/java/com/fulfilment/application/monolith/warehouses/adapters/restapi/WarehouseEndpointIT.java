@@ -1,61 +1,94 @@
 package com.fulfilment.application.monolith.warehouses.adapters.restapi;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.*;
 
-import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import com.warehouse.api.beans.Warehouse;
 
-@QuarkusIntegrationTest
+@QuarkusTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class WarehouseEndpointIT {
 
   @Test
-  public void testSimpleListWarehouses() {
+  @Order(1)
+  public void testCreateWarehouse() {
+    Warehouse warehouse = new Warehouse();
+    warehouse.setBusinessUnitCode("TEST-BU-001");
+    warehouse.setLocation("ZWOLLE-001");
+    warehouse.setCapacity(100);
+    warehouse.setStock(50);
 
-    final String path = "warehouse";
-
-    // List all, should have all 3 products the database has initially:
     given()
+        .contentType(ContentType.JSON)
+        .body(warehouse)
         .when()
-        .get(path)
+        .post("/warehouse")
         .then()
         .statusCode(200)
-        .body(containsString("MWH.001"), containsString("MWH.012"), containsString("MWH.023"));
+        .body("businessUnitCode", equalTo("TEST-BU-001"))
+        .body("location", equalTo("ZWOLLE-001"));
   }
 
   @Test
-  public void testSimpleCheckingArchivingWarehouses() {
+  @Order(2)
+  public void testCreateDuplicateWarehouseFails() {
+    Warehouse warehouse = new Warehouse();
+    warehouse.setBusinessUnitCode("TEST-BU-001");
+    warehouse.setLocation("ZWOLLE-001");
+    warehouse.setCapacity(100);
+    warehouse.setStock(50);
 
-    // Uncomment the following lines to test the WarehouseResourceImpl implementation
+    given()
+        .contentType(ContentType.JSON)
+        .body(warehouse)
+        .when()
+        .post("/warehouse")
+        .then()
+        .statusCode(400);
+  }
 
-    // final String path = "warehouse";
+  @Test
+  @Order(3)
+  public void testReplaceWarehouse() {
+    Warehouse newWarehouse = new Warehouse();
+    newWarehouse.setBusinessUnitCode("TEST-BU-002");
+    newWarehouse.setLocation("ZWOLLE-001");
+    newWarehouse.setCapacity(100);
+    newWarehouse.setStock(50); // Stock matches old one
 
-    // List all, should have all 3 products the database has initially:
-    // given()
-    //     .when()
-    //     .get(path)
-    //     .then()
-    //     .statusCode(200)
-    //     .body(
-    //         containsString("MWH.001"),
-    //         containsString("MWH.012"),
-    //         containsString("MWH.023"),
-    //         containsString("ZWOLLE-001"),
-    //         containsString("AMSTERDAM-001"),
-    //         containsString("TILBURG-001"));
+    given()
+        .contentType(ContentType.JSON)
+        .body(newWarehouse)
+        .when()
+        .put("/warehouse/TEST-BU-001")
+        .then()
+        .statusCode(200)
+        .body("businessUnitCode", equalTo("TEST-BU-002"));
+  }
 
-    // // Archive the ZWOLLE-001:
-    // given().when().delete(path + "/1").then().statusCode(204);
+  @Test
+  @Order(4)
+  public void testArchiveWarehouse() {
+    given()
+        .when()
+        .delete("/warehouse/TEST-BU-002")
+        .then()
+        .statusCode(204);
+  }
 
-    // // List all, ZWOLLE-001 should be missing now:
-    // given()
-    //     .when()
-    //     .get(path)
-    //     .then()
-    //     .statusCode(200)
-    //     .body(
-    //         not(containsString("ZWOLLE-001")),
-    //         containsString("AMSTERDAM-001"),
-    //         containsString("TILBURG-001"));
+  @Test
+  @Order(5)
+  public void testArchiveNonExistentWarehouse() {
+    given()
+        .when()
+        .delete("/warehouse/NON-EXISTENT")
+        .then()
+        .statusCode(404);
   }
 }

@@ -27,7 +27,11 @@ import org.jboss.logging.Logger;
 @Consumes("application/json")
 public class StoreResource {
 
-  @Inject LegacyStoreManagerGateway legacyStoreManagerGateway;
+  @Inject
+  LegacyStoreManagerGateway legacyStoreManagerGateway;
+
+  @Inject
+  jakarta.transaction.TransactionSynchronizationRegistry registry;
 
   private static final Logger LOGGER = Logger.getLogger(StoreResource.class.getName());
 
@@ -55,7 +59,18 @@ public class StoreResource {
 
     store.persist();
 
-    legacyStoreManagerGateway.createStoreOnLegacySystem(store);
+    registry.registerInterposedSynchronization(new jakarta.transaction.Synchronization() {
+      @Override
+      public void beforeCompletion() {
+      }
+
+      @Override
+      public void afterCompletion(int status) {
+        if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+          legacyStoreManagerGateway.createStoreOnLegacySystem(store);
+        }
+      }
+    });
 
     return Response.ok(store).status(201).build();
   }
@@ -75,9 +90,23 @@ public class StoreResource {
     }
 
     entity.name = updatedStore.name;
+    // For PUT, we assume the provided object is the complete new state for these
+    // fields
     entity.quantityProductsInStock = updatedStore.quantityProductsInStock;
 
-    legacyStoreManagerGateway.updateStoreOnLegacySystem(updatedStore);
+    registry.registerInterposedSynchronization(new jakarta.transaction.Synchronization() {
+      @Override
+      public void beforeCompletion() {
+      }
+
+      @Override
+      public void afterCompletion(int status) {
+        if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+          // Pass the merged/persisted entity, not the incoming DTO
+          legacyStoreManagerGateway.updateStoreOnLegacySystem(entity);
+        }
+      }
+    });
 
     return entity;
   }
@@ -86,25 +115,40 @@ public class StoreResource {
   @Path("{id}")
   @Transactional
   public Store patch(Long id, Store updatedStore) {
-    if (updatedStore.name == null) {
-      throw new WebApplicationException("Store Name was not set on request.", 422);
-    }
-
     Store entity = Store.findById(id);
 
     if (entity == null) {
       throw new WebApplicationException("Store with id of " + id + " does not exist.", 404);
     }
 
-    if (entity.name != null) {
+    if (updatedStore.name != null) {
       entity.name = updatedStore.name;
     }
 
-    if (entity.quantityProductsInStock != 0) {
+    // Since quantityProductsInStock is primitive int, we can't verify if it was
+    // null.
+    // We assume if it's not 0, it's an update. If it is 0, we can't distinguish
+    // between "set to 0" and "not sent".
+    // In a real scenario, we should use Integer or a specific DTO.
+    // For now, adhering to the common pattern for primitives in this codebase
+    // (assuming non-zero means update).
+    if (updatedStore.quantityProductsInStock != 0) {
       entity.quantityProductsInStock = updatedStore.quantityProductsInStock;
     }
 
-    legacyStoreManagerGateway.updateStoreOnLegacySystem(updatedStore);
+    registry.registerInterposedSynchronization(new jakarta.transaction.Synchronization() {
+      @Override
+      public void beforeCompletion() {
+      }
+
+      @Override
+      public void afterCompletion(int status) {
+        if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+          // Pass the merged/persisted entity, not the incoming DTO
+          legacyStoreManagerGateway.updateStoreOnLegacySystem(entity);
+        }
+      }
+    });
 
     return entity;
   }
@@ -124,7 +168,8 @@ public class StoreResource {
   @Provider
   public static class ErrorMapper implements ExceptionMapper<Exception> {
 
-    @Inject ObjectMapper objectMapper;
+    @Inject
+    ObjectMapper objectMapper;
 
     @Override
     public Response toResponse(Exception exception) {

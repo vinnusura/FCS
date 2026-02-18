@@ -1,17 +1,29 @@
 package com.fulfilment.application.monolith.warehouses.adapters.restapi;
 
 import com.fulfilment.application.monolith.warehouses.adapters.database.WarehouseRepository;
+import com.fulfilment.application.monolith.warehouses.domain.ports.ArchiveWarehouseOperation;
+import com.fulfilment.application.monolith.warehouses.domain.ports.CreateWarehouseOperation;
+import com.fulfilment.application.monolith.warehouses.domain.ports.ReplaceWarehouseOperation;
 import com.warehouse.api.WarehouseResource;
 import com.warehouse.api.beans.Warehouse;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
 @RequestScoped
 public class WarehouseResourceImpl implements WarehouseResource {
 
-  @Inject private WarehouseRepository warehouseRepository;
+  @Inject
+  private WarehouseRepository warehouseRepository;
+  @Inject
+  private CreateWarehouseOperation createWarehouseOperation;
+  @Inject
+  private ReplaceWarehouseOperation replaceWarehouseOperation;
+  @Inject
+  private ArchiveWarehouseOperation archiveWarehouseOperation;
 
   @Override
   public List<Warehouse> listAllWarehousesUnits() {
@@ -20,28 +32,49 @@ public class WarehouseResourceImpl implements WarehouseResource {
 
   @Override
   public Warehouse createANewWarehouseUnit(@NotNull Warehouse data) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'createANewWarehouseUnit'");
+    try {
+      var domainWarehouse = toDomain(data);
+      createWarehouseOperation.create(domainWarehouse);
+      return getAWarehouseUnitByID(domainWarehouse.businessUnitCode);
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+    }
   }
 
   @Override
   public Warehouse getAWarehouseUnitByID(String id) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAWarehouseUnitByID'");
+    var domainWarehouse = warehouseRepository.findByBusinessUnitCode(id);
+    if (domainWarehouse == null) {
+      throw new jakarta.ws.rs.NotFoundException("Warehouse " + id + " not found");
+    }
+    return toWarehouseResponse(domainWarehouse);
   }
 
   @Override
   public void archiveAWarehouseUnitByID(String id) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'archiveAWarehouseUnitByID'");
+    try {
+      archiveWarehouseOperation.archive(id);
+    } catch (IllegalArgumentException e) {
+      if (e.getMessage() != null && e.getMessage().contains("not found")) {
+        throw new WebApplicationException(e.getMessage(), Response.Status.NOT_FOUND);
+      }
+      throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+    }
   }
 
   @Override
   public Warehouse replaceTheCurrentActiveWarehouse(
       String businessUnitCode, @NotNull Warehouse data) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException(
-        "Unimplemented method 'replaceTheCurrentActiveWarehouse'");
+    try {
+      var domainWarehouse = toDomain(data);
+      replaceWarehouseOperation.replace(businessUnitCode, domainWarehouse);
+      return getAWarehouseUnitByID(domainWarehouse.businessUnitCode);
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      if (e.getMessage() != null && e.getMessage().contains("not found")) {
+        throw new WebApplicationException(e.getMessage(), Response.Status.NOT_FOUND);
+      }
+      throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+    }
   }
 
   private Warehouse toWarehouseResponse(
@@ -53,5 +86,14 @@ public class WarehouseResourceImpl implements WarehouseResource {
     response.setStock(warehouse.stock);
 
     return response;
+  }
+
+  private com.fulfilment.application.monolith.warehouses.domain.models.Warehouse toDomain(Warehouse data) {
+    var warehouse = new com.fulfilment.application.monolith.warehouses.domain.models.Warehouse();
+    warehouse.businessUnitCode = data.getBusinessUnitCode();
+    warehouse.location = data.getLocation();
+    warehouse.capacity = data.getCapacity();
+    warehouse.stock = data.getStock();
+    return warehouse;
   }
 }

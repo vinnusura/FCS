@@ -15,9 +15,15 @@ public class ArchiveWarehouseUseCase implements ArchiveWarehouseOperation {
   }
 
   @Override
-  public void archive(Warehouse warehouse) {
-    // TODO implement this method
+  public void archive(String businessUnitCode) {
+    Warehouse warehouse = warehouseStore.findByBusinessUnitCode(businessUnitCode);
+    if (warehouse == null) {
+      throw new IllegalArgumentException("Warehouse " + businessUnitCode + " not found.");
+    }
 
-    warehouseStore.update(warehouse);
+    if (warehouse.archivedAt == null) {
+      warehouse.archivedAt = java.time.LocalDateTime.now();
+      warehouseStore.update(warehouse);
+    }
   }
 }

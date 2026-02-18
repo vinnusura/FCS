@@ -13,8 +13,11 @@ import java.time.LocalDateTime;
 @Cacheable
 public class DbWarehouse {
 
-  @Id @GeneratedValue public Long id;
+  @Id
+  @GeneratedValue
+  public Long id;
 
+  @jakarta.persistence.Column(unique = true)
   public String businessUnitCode;
 
   public String location;
@@ -27,7 +30,8 @@ public class DbWarehouse {
 
   public LocalDateTime archivedAt;
 
-  public DbWarehouse() {}
+  public DbWarehouse() {
+  }
 
   public Warehouse toWarehouse() {
     var warehouse = new Warehouse();
