@@ -107,7 +107,7 @@ class WarehouseResourceImplTest {
 
     @Test
     void archiveAWarehouseUnitByID_NotFound() {
-        doThrow(new IllegalArgumentException("not found")).when(archiveWarehouseOperation).archive("BU1");
+        doThrow(new IllegalArgumentException("Warehouse not found")).when(archiveWarehouseOperation).archive("BU1");
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
                 () -> resource.archiveAWarehouseUnitByID("BU1"));
@@ -141,7 +141,8 @@ class WarehouseResourceImplTest {
     @Test
     void replaceTheCurrentActiveWarehouse_NotFound() {
         com.warehouse.api.beans.Warehouse input = new com.warehouse.api.beans.Warehouse();
-        doThrow(new IllegalArgumentException("not found")).when(replaceWarehouseOperation).replace(eq("BU1"), any());
+        doThrow(new IllegalArgumentException("Warehouse not found")).when(replaceWarehouseOperation).replace(eq("BU1"),
+                any());
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
                 () -> resource.replaceTheCurrentActiveWarehouse("BU1", input));
