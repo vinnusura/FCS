@@ -3,8 +3,10 @@ package com.fulfilment.application.monolith.warehouses.domain.usecases;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.fulfilment.application.monolith.exceptions.WarehouseException;
 import com.fulfilment.application.monolith.warehouses.domain.models.Location;
 import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import com.fulfilment.application.monolith.warehouses.domain.ports.ArchiveWarehouseOperation;
 import com.fulfilment.application.monolith.warehouses.domain.ports.LocationResolver;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,12 +23,14 @@ public class ReplaceWarehouseUseCaseTest {
     private WarehouseStore warehouseStore;
     @Mock
     private LocationResolver locationResolver;
+    @Mock
+    private ArchiveWarehouseOperation archiveWarehouseOperation;
 
     private ReplaceWarehouseUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new ReplaceWarehouseUseCase(warehouseStore, locationResolver);
+        useCase = new ReplaceWarehouseUseCase(warehouseStore, archiveWarehouseOperation, locationResolver);
     }
 
     @Test
@@ -38,7 +42,7 @@ public class ReplaceWarehouseUseCaseTest {
         oldWarehouse.capacity = 100;
 
         Warehouse newWarehouse = new Warehouse();
-        newWarehouse.businessUnitCode = "NEW";
+        newWarehouse.businessUnitCode = "OLD";
         newWarehouse.location = "LOC1";
         newWarehouse.capacity = 100;
         newWarehouse.stock = 100;
@@ -46,49 +50,54 @@ public class ReplaceWarehouseUseCaseTest {
         Location location = new Location("LOC1", 5, 200);
 
         when(warehouseStore.findByBusinessUnitCode("OLD")).thenReturn(oldWarehouse);
-        when(warehouseStore.findByBusinessUnitCode("NEW")).thenReturn(null);
         when(locationResolver.resolveByIdentifier("LOC1")).thenReturn(location);
         when(warehouseStore.getByLocation("LOC1")).thenReturn(Collections.singletonList(oldWarehouse));
 
-        useCase.replace("OLD", newWarehouse);
+        useCase.replace(newWarehouse);
 
-        verify(warehouseStore).update(oldWarehouse);
+        verify(archiveWarehouseOperation).archive("OLD");
         verify(warehouseStore).create(newWarehouse);
-        assertNotNull(oldWarehouse.archivedAt);
+        assertNull(oldWarehouse.archivedAt); // The use case doesn't modify the object explicitly, it calls archive op
     }
 
     @Test
     void replace_Fails_OldNotFound() {
+        Warehouse newWarehouse = new Warehouse();
+        newWarehouse.businessUnitCode = "OLD";
         when(warehouseStore.findByBusinessUnitCode("OLD")).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.replace("OLD", new Warehouse()));
+        assertThrows(WarehouseException.class, () -> useCase.replace(newWarehouse));
         verify(warehouseStore, never()).update(any());
     }
 
     @Test
     void replace_Fails_CapacityInsufficient() {
         Warehouse oldWarehouse = new Warehouse();
+        oldWarehouse.businessUnitCode = "OLD";
         oldWarehouse.stock = 100;
 
         Warehouse newWarehouse = new Warehouse();
+        newWarehouse.businessUnitCode = "OLD";
         newWarehouse.capacity = 99;
 
         when(warehouseStore.findByBusinessUnitCode("OLD")).thenReturn(oldWarehouse);
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.replace("OLD", newWarehouse));
+        assertThrows(WarehouseException.class, () -> useCase.replace(newWarehouse));
     }
 
     @Test
     void replace_Fails_StockMismatch() {
         Warehouse oldWarehouse = new Warehouse();
+        oldWarehouse.businessUnitCode = "OLD";
         oldWarehouse.stock = 100;
 
         Warehouse newWarehouse = new Warehouse();
+        newWarehouse.businessUnitCode = "OLD";
         newWarehouse.capacity = 100;
         newWarehouse.stock = 99;
 
         when(warehouseStore.findByBusinessUnitCode("OLD")).thenReturn(oldWarehouse);
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.replace("OLD", newWarehouse));
+        assertThrows(WarehouseException.class, () -> useCase.replace(newWarehouse));
     }
 }

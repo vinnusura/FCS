@@ -4,6 +4,10 @@ import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
 import com.fulfilment.application.monolith.warehouses.domain.ports.ArchiveWarehouseOperation;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
+import com.fulfilment.application.monolith.exceptions.WarehouseException;
+import static com.fulfilment.application.monolith.exceptions.ErrorRule.WAREHOUSE_NOT_FOUND;
 
 @ApplicationScoped
 public class ArchiveWarehouseUseCase implements ArchiveWarehouseOperation {
@@ -15,10 +19,11 @@ public class ArchiveWarehouseUseCase implements ArchiveWarehouseOperation {
   }
 
   @Override
+  @Transactional
   public void archive(String businessUnitCode) {
     Warehouse warehouse = warehouseStore.findByBusinessUnitCode(businessUnitCode);
     if (warehouse == null) {
-      throw new IllegalArgumentException("Warehouse not found");
+      throw new WarehouseException(WAREHOUSE_NOT_FOUND);
     }
     warehouseStore.remove(warehouse);
   }

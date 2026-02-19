@@ -11,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fulfilment.application.monolith.exceptions.WarehouseException;
+
 @ExtendWith(MockitoExtension.class)
 public class ArchiveWarehouseUseCaseTest {
 
@@ -40,6 +42,6 @@ public class ArchiveWarehouseUseCaseTest {
     void archive_Fails_NotFound() {
         when(warehouseStore.findByBusinessUnitCode("BU1")).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.archive("BU1"));
+        assertThrows(WarehouseException.class, () -> useCase.archive("BU1"));
     }
 }

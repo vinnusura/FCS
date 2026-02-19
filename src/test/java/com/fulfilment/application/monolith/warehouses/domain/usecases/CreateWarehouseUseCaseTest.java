@@ -73,6 +73,26 @@ public class CreateWarehouseUseCaseTest {
     }
 
     @Test
+    void testCreate_FailMaxWarehousesPerLocationPolicy() {
+        Warehouse warehouse = new Warehouse();
+        warehouse.businessUnitCode = "MW1";
+        warehouse.location = "ZWOLLE-001";
+        warehouse.capacity = 100;
+        warehouse.stock = 10;
+
+        // Mock location resolver to return a location with max 1 warehouse
+        Location location = new Location("ZWOLLE-001", 1, 100);
+        when(locationResolver.resolveByIdentifier("ZWOLLE-001")).thenReturn(location);
+
+        // Mock warehouse store to return 1 existing warehouse for this location
+        when(warehouseStore.getByLocation("ZWOLLE-001")).thenReturn(List.of(new Warehouse()));
+
+        // Expect exception
+        assertThrows(IllegalStateException.class,
+                () -> useCase.create(warehouse));
+    }
+
+    @Test
     void create_Fails_MaxWarehousesInLocation() {
         Warehouse warehouse = new Warehouse();
         warehouse.businessUnitCode = "BU1";

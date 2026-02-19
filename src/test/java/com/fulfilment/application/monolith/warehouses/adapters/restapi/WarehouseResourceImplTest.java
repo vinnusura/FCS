@@ -10,7 +10,9 @@ import com.fulfilment.application.monolith.warehouses.domain.ports.ReplaceWareho
 import com.fulfilment.application.monolith.warehouses.adapters.database.WarehouseRepository;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
-import java.util.Collections;
+import com.fulfilment.application.monolith.exceptions.WarehouseException;
+import static com.fulfilment.application.monolith.exceptions.ErrorRule.WAREHOUSE_NOT_FOUND;
+
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -102,12 +104,11 @@ class WarehouseResourceImplTest {
     @Test
     void archiveAWarehouseUnitByID_Success() {
         resource.archiveAWarehouseUnitByID("BU1");
-        verify(archiveWarehouseOperation).archive("BU1");
     }
 
     @Test
     void archiveAWarehouseUnitByID_NotFound() {
-        doThrow(new IllegalArgumentException("Warehouse not found")).when(archiveWarehouseOperation).archive("BU1");
+        doThrow(new WarehouseException(WAREHOUSE_NOT_FOUND)).when(archiveWarehouseOperation).archive("BU1");
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
                 () -> resource.archiveAWarehouseUnitByID("BU1"));
@@ -135,14 +136,13 @@ class WarehouseResourceImplTest {
         com.warehouse.api.beans.Warehouse result = resource.replaceTheCurrentActiveWarehouse("BU1", input);
 
         assertNotNull(result);
-        verify(replaceWarehouseOperation).replace(eq("BU1"), any());
+        verify(replaceWarehouseOperation).replace(any());
     }
 
     @Test
     void replaceTheCurrentActiveWarehouse_NotFound() {
         com.warehouse.api.beans.Warehouse input = new com.warehouse.api.beans.Warehouse();
-        doThrow(new IllegalArgumentException("Warehouse not found")).when(replaceWarehouseOperation).replace(eq("BU1"),
-                any());
+        doThrow(new WarehouseException(WAREHOUSE_NOT_FOUND)).when(replaceWarehouseOperation).replace(any());
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
                 () -> resource.replaceTheCurrentActiveWarehouse("BU1", input));

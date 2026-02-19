@@ -35,17 +35,8 @@ public class WarehouseRepository implements WarehouseStore, PanacheRepository<Db
       dbWarehouse.stock = warehouse.stock;
       // createAt should not change
       dbWarehouse.archivedAt = warehouse.archivedAt;
-      this.persist(dbWarehouse); // In Panache, changes to managed entities are auto-persisted, but persist() is
-                                 // safe.
+      this.persist(dbWarehouse);
     } else {
-      // If not found, maybe create? Or throw? For now, do nothing or throw.
-      // Assuming UseCase handles existence check, but repository 'update' implies
-      // existing.
-      // Let's create if not exists or throw? Let's just create if not exists to be
-      // safe or throw.
-      // Given UseCase logic, it updates existing.
-      // Let's throw an exception if not found, or create new.
-      // I'll assume updates are for existing entities.
       create(warehouse);
     }
   }
