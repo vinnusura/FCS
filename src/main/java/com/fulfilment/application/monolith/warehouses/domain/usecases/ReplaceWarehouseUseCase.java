@@ -23,10 +23,10 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
     // 1. Fetch old warehouse
     Warehouse oldWarehouse = warehouseStore.findByBusinessUnitCode(oldBuCode);
     if (oldWarehouse == null) {
-      throw new IllegalArgumentException("Warehouse to replace not found: " + oldBuCode);
+      throw new IllegalArgumentException("Warehouse not found");
     }
     if (oldWarehouse.archivedAt != null) {
-      throw new IllegalArgumentException("Warehouse " + oldBuCode + " is already archived.");
+      throw new IllegalArgumentException("Warehouse is archived");
     }
 
     // 2. Additional Validations for Replacement
@@ -42,21 +42,18 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
       throw new IllegalArgumentException("New warehouse stock must match old warehouse stock.");
     }
 
-    // 3. Standard Validations (Validation logic duplicated from
-    // CreateWarehouseUseCase for now)
-    // 3.1 Business Unit Code Verification
+    // 3. Validate new warehouse details (business unit code, location)
     if (warehouseStore.findByBusinessUnitCode(newWarehouse.businessUnitCode) != null) {
       throw new IllegalArgumentException(
           "Warehouse with Business Unit Code " + newWarehouse.businessUnitCode + " already exists.");
     }
 
-    // 3.2 Location Validation
     var location = locationResolver.resolveByIdentifier(newWarehouse.location);
     if (location == null) {
       throw new IllegalArgumentException("Location " + newWarehouse.location + " is not a valid location.");
     }
 
-    // 3.3 Warehouse Creation Feasibility & Capacity Validation
+    // 4. Validate capacity constraints
     var existingWarehouses = warehouseStore.getByLocation(newWarehouse.location);
     long activeCount = existingWarehouses.stream().filter(w -> w.archivedAt == null).count();
 

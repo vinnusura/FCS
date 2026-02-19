@@ -55,8 +55,8 @@ public class WarehouseResourceImpl implements WarehouseResource {
     try {
       archiveWarehouseOperation.archive(id);
     } catch (IllegalArgumentException e) {
-      if (e.getMessage() != null && e.getMessage().contains("not found")) {
-        throw new WebApplicationException(e.getMessage(), Response.Status.NOT_FOUND);
+      if (e.getMessage() != null && e.getMessage().equals("Warehouse not found")) {
+        throw new WebApplicationException("Warehouse not found", Response.Status.NOT_FOUND);
       }
       throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
     }
@@ -70,8 +70,8 @@ public class WarehouseResourceImpl implements WarehouseResource {
       replaceWarehouseOperation.replace(businessUnitCode, domainWarehouse);
       return getAWarehouseUnitByID(domainWarehouse.businessUnitCode);
     } catch (IllegalArgumentException | IllegalStateException e) {
-      if (e.getMessage() != null && e.getMessage().contains("not found")) {
-        throw new WebApplicationException(e.getMessage(), Response.Status.NOT_FOUND);
+      if (e.getMessage() != null && e.getMessage().equals("Warehouse not found")) {
+        throw new WebApplicationException("Warehouse not found", Response.Status.NOT_FOUND);
       }
       throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
     }

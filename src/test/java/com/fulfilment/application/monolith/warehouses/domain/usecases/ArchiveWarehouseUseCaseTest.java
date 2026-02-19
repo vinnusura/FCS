@@ -33,21 +33,7 @@ public class ArchiveWarehouseUseCaseTest {
 
         useCase.archive("BU1");
 
-        assertNotNull(warehouse.archivedAt);
-        verify(warehouseStore).update(warehouse);
-    }
-
-    @Test
-    void archive_Idempotent() {
-        Warehouse warehouse = new Warehouse();
-        warehouse.businessUnitCode = "BU1";
-        warehouse.archivedAt = java.time.LocalDateTime.now();
-
-        when(warehouseStore.findByBusinessUnitCode("BU1")).thenReturn(warehouse);
-
-        useCase.archive("BU1");
-
-        verify(warehouseStore, never()).update(any());
+        verify(warehouseStore).remove(warehouse);
     }
 
     @Test

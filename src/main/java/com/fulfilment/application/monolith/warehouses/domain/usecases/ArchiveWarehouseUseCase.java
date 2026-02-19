@@ -18,12 +18,8 @@ public class ArchiveWarehouseUseCase implements ArchiveWarehouseOperation {
   public void archive(String businessUnitCode) {
     Warehouse warehouse = warehouseStore.findByBusinessUnitCode(businessUnitCode);
     if (warehouse == null) {
-      throw new IllegalArgumentException("Warehouse " + businessUnitCode + " not found.");
+      throw new IllegalArgumentException("Warehouse not found");
     }
-
-    if (warehouse.archivedAt == null) {
-      warehouse.archivedAt = java.time.LocalDateTime.now();
-      warehouseStore.update(warehouse);
-    }
+    warehouseStore.remove(warehouse);
   }
 }
