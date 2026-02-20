@@ -53,7 +53,9 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
     if (existing.archivedAt != null) {
       throw new WarehouseException(WAREHOUSE_ALREADY_ARCHIVED);
     }
-
+    if (!existing.location.equals(newWarehouse.location)) {
+      throw new WarehouseException(LOCATION_CHANGE_NOT_ALLOWED);
+    }
     if (!existing.stock.equals(newWarehouse.stock)) {
       throw new WarehouseException(WAREHOUSE_STOCK_MISMATCH);
     }
@@ -72,22 +74,13 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
     }
 
     var warehousesAtLocation = warehouseStore.getByLocation(newWarehouse.location);
-    boolean sameLocation = existing.location.equals(newWarehouse.location);
-
-    long activeCount = warehousesAtLocation.stream()
-        .filter(w -> w.archivedAt == null)
-        .count();
-
-    if (!sameLocation && activeCount >= location.maxNumberOfWarehouses) {
-      throw new WarehouseException(LOCATION_MAX_WAREHOUSES_REACHED);
-    }
 
     int usedCapacity = warehousesAtLocation.stream()
         .filter(w -> w.archivedAt == null)
         .mapToInt(w -> w.capacity)
         .sum();
 
-    int adjustedCapacity = sameLocation ? usedCapacity - existing.capacity : usedCapacity;
+    int adjustedCapacity = usedCapacity - existing.capacity;
 
     if (adjustedCapacity + newWarehouse.capacity > location.maxCapacity) {
       throw new WarehouseException(LOCATION_CAPACITY_EXCEEDED);

@@ -1,27 +1,32 @@
-package com.fulfilment.application.monolith.fulfillment;
+package com.fulfilment.application.monolith.fulfillment.domain.usecases;
 
+import com.fulfilment.application.monolith.fulfillment.domain.models.Fulfillment;
+import com.fulfilment.application.monolith.fulfillment.domain.ports.AssociateFulfillmentOperation;
+import com.fulfilment.application.monolith.fulfillment.domain.ports.FulfillmentStore;
 import com.fulfilment.application.monolith.products.Product;
 import com.fulfilment.application.monolith.products.ProductRepository;
 import com.fulfilment.application.monolith.stores.Store;
-import com.fulfilment.application.monolith.warehouses.adapters.database.DbWarehouse;
-import com.fulfilment.application.monolith.warehouses.adapters.database.WarehouseRepository;
+import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
-public class FulfillmentService {
+public class AssociateFulfillmentUseCase implements AssociateFulfillmentOperation {
 
-    @Inject
-    ProductRepository productRepository;
+    private final FulfillmentStore fulfillmentStore;
+    private final ProductRepository productRepository;
+    private final WarehouseStore warehouseStore;
 
-    @Inject
-    WarehouseRepository warehouseRepository;
+    public AssociateFulfillmentUseCase(FulfillmentStore fulfillmentStore,
+            ProductRepository productRepository,
+            WarehouseStore warehouseStore) {
+        this.fulfillmentStore = fulfillmentStore;
+        this.productRepository = productRepository;
+        this.warehouseStore = warehouseStore;
+    }
 
-    @Inject
-    EntityManager entityManager;
-
+    @Override
     @Transactional
     public void associate(Long storeId, Long productId, String warehouseBuCode) {
         Store store = Store.findById(storeId);
@@ -34,21 +39,20 @@ public class FulfillmentService {
             throw new IllegalArgumentException("Product not found: " + productId);
         }
 
-        DbWarehouse warehouse = warehouseRepository.find("businessUnitCode", warehouseBuCode).firstResult();
+        Warehouse warehouse = warehouseStore.findByBusinessUnitCode(warehouseBuCode);
         if (warehouse == null) {
             throw new IllegalArgumentException("Warehouse not found: " + warehouseBuCode);
         }
 
         // Check if association already exists
-        long existingCount = Fulfillment.count("store = ?1 and product = ?2 and warehouse = ?3", store, product,
-                warehouse);
+        long existingCount = fulfillmentStore.countByStoreAndProductAndWarehouse(store, product, warehouse);
         if (existingCount > 0) {
             return; // Already exists, idempotent
         }
 
         // Constraint 1: Each Product can be fulfilled by a maximum of 2 different
         // Warehouses per Store
-        long warehousesForProductAndStore = Fulfillment.count("store = ?1 and product = ?2", store, product);
+        long warehousesForProductAndStore = fulfillmentStore.countByStoreAndProduct(store, product);
         if (warehousesForProductAndStore >= 2) {
             throw new IllegalArgumentException(
                     "Product " + productId + " is already fulfilled by 2 warehouses for store " + storeId);
@@ -56,16 +60,10 @@ public class FulfillmentService {
 
         // Constraint 2: Each Store can be fulfilled by a maximum of 3 different
         // Warehouses
-        // Check if this warehouse is already fulfilling for this store (for ANY
-        // product)
-        long isWarehouseAlreadyFulfillingForStore = Fulfillment.count("store = ?1 and warehouse = ?2", store,
-                warehouse);
+        long isWarehouseAlreadyFulfillingForStore = fulfillmentStore.countByStoreAndWarehouse(store, warehouse);
         if (isWarehouseAlreadyFulfillingForStore == 0) {
             // New warehouse for this store, check limit
-            Long distinctWarehousesForStore = entityManager.createQuery(
-                    "SELECT COUNT(DISTINCT f.warehouse) FROM Fulfillment f WHERE f.store = :store", Long.class)
-                    .setParameter("store", store)
-                    .getSingleResult();
+            long distinctWarehousesForStore = fulfillmentStore.countDistinctWarehousesByStore(store);
 
             if (distinctWarehousesForStore >= 3) {
                 throw new IllegalArgumentException(
@@ -74,14 +72,10 @@ public class FulfillmentService {
         }
 
         // Constraint 3: Each Warehouse can store maximally 5 types of Products
-        // Check if this product is already stored in this warehouse (for ANY store)
-        long isProductAlreadyInWarehouse = Fulfillment.count("warehouse = ?1 and product = ?2", warehouse, product);
+        long isProductAlreadyInWarehouse = fulfillmentStore.countByWarehouseAndProduct(warehouse, product);
         if (isProductAlreadyInWarehouse == 0) {
             // New product for this warehouse, check limit
-            Long distinctProductsInWarehouse = entityManager.createQuery(
-                    "SELECT COUNT(DISTINCT f.product) FROM Fulfillment f WHERE f.warehouse = :warehouse", Long.class)
-                    .setParameter("warehouse", warehouse)
-                    .getSingleResult();
+            long distinctProductsInWarehouse = fulfillmentStore.countDistinctProductsByWarehouse(warehouse);
 
             if (distinctProductsInWarehouse >= 5) {
                 throw new IllegalArgumentException(
@@ -93,6 +87,6 @@ public class FulfillmentService {
         fulfillment.store = store;
         fulfillment.product = product;
         fulfillment.warehouse = warehouse;
-        fulfillment.persist();
+        fulfillmentStore.create(fulfillment);
     }
 }

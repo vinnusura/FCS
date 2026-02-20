@@ -25,6 +25,7 @@ public class ArchiveWarehouseUseCase implements ArchiveWarehouseOperation {
     if (warehouse == null) {
       throw new WarehouseException(WAREHOUSE_NOT_FOUND);
     }
-    warehouseStore.remove(warehouse);
+    warehouse.archivedAt = java.time.LocalDateTime.now();
+    warehouseStore.update(warehouse);
   }
 }

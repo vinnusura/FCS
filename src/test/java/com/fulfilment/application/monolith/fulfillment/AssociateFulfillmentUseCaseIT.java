@@ -1,23 +1,26 @@
 package com.fulfilment.application.monolith.fulfillment;
 
+import com.fulfilment.application.monolith.fulfillment.adapters.database.DbFulfillment;
+import com.fulfilment.application.monolith.fulfillment.domain.usecases.AssociateFulfillmentUseCase;
 import com.fulfilment.application.monolith.products.Product;
 import com.fulfilment.application.monolith.products.ProductRepository;
 import com.fulfilment.application.monolith.stores.Store;
 import com.fulfilment.application.monolith.warehouses.adapters.database.DbWarehouse;
 import com.fulfilment.application.monolith.warehouses.adapters.database.WarehouseRepository;
+import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-public class FulfillmentServiceIT {
+public class AssociateFulfillmentUseCaseIT {
 
     @Inject
-    FulfillmentService service;
+    AssociateFulfillmentUseCase associateFulfillmentUseCase;
 
     @Inject
     ProductRepository productRepository;
@@ -28,7 +31,7 @@ public class FulfillmentServiceIT {
     @BeforeEach
     @Transactional
     void setUp() {
-        Fulfillment.deleteAll();
+        DbFulfillment.deleteAll();
         Store.deleteAll();
         productRepository.deleteAll();
         warehouseRepository.deleteAll();
@@ -43,9 +46,9 @@ public class FulfillmentServiceIT {
         productRepository.persist(p1);
         createWarehouse("W1");
 
-        service.associate(s1.id, p1.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p1.id, "W1");
 
-        Assertions.assertEquals(1, Fulfillment.count());
+        Assertions.assertEquals(1, DbFulfillment.count());
     }
 
     @Test
@@ -59,11 +62,11 @@ public class FulfillmentServiceIT {
         createWarehouse("W2");
         createWarehouse("W3");
 
-        service.associate(s1.id, p1.id, "W1");
-        service.associate(s1.id, p1.id, "W2");
+        associateFulfillmentUseCase.associate(s1.id, p1.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p1.id, "W2");
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            service.associate(s1.id, p1.id, "W3");
+            associateFulfillmentUseCase.associate(s1.id, p1.id, "W3");
         });
     }
 
@@ -86,17 +89,17 @@ public class FulfillmentServiceIT {
         createWarehouse("W3");
         createWarehouse("W4");
 
-        service.associate(s1.id, p1.id, "W1");
-        service.associate(s1.id, p2.id, "W2");
-        service.associate(s1.id, p3.id, "W3");
+        associateFulfillmentUseCase.associate(s1.id, p1.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p2.id, "W2");
+        associateFulfillmentUseCase.associate(s1.id, p3.id, "W3");
 
         // Adding W4 (new warehouse for store S1) -> Fail
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            service.associate(s1.id, p4.id, "W4");
+            associateFulfillmentUseCase.associate(s1.id, p4.id, "W4");
         });
 
         // Adding W1 again (existing warehouse for store S1) -> Success
-        service.associate(s1.id, p4.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p4.id, "W1");
     }
 
     @Test
@@ -119,27 +122,29 @@ public class FulfillmentServiceIT {
 
         createWarehouse("W1");
 
-        service.associate(s1.id, p1.id, "W1");
-        service.associate(s1.id, p2.id, "W1");
-        service.associate(s1.id, p3.id, "W1");
-        service.associate(s1.id, p4.id, "W1");
-        service.associate(s1.id, p5.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p1.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p2.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p3.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p4.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p5.id, "W1");
 
         // Adding P6 (new product for warehouse W1) -> Fail
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            service.associate(s1.id, p6.id, "W1");
+            associateFulfillmentUseCase.associate(s1.id, p6.id, "W1");
         });
 
         // Adding P1 again (existing product for warehouse W1) -> Success (Idempotent)
-        service.associate(s1.id, p1.id, "W1");
+        associateFulfillmentUseCase.associate(s1.id, p1.id, "W1");
     }
 
     private DbWarehouse createWarehouse(String buCode) {
-        DbWarehouse w = new DbWarehouse();
+        Warehouse w = new Warehouse();
         w.businessUnitCode = buCode;
-        w.capacity = 100;
+        w.location = "Loc-" + buCode;
+        w.capacity = 1000;
         w.stock = 0;
-        warehouseRepository.persist(w);
-        return w;
+        w.createdAt = LocalDateTime.now();
+        warehouseRepository.create(w);
+        return warehouseRepository.find("businessUnitCode", buCode).firstResult();
     }
 }

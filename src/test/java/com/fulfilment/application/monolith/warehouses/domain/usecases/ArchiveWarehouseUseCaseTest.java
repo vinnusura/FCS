@@ -35,7 +35,7 @@ public class ArchiveWarehouseUseCaseTest {
 
         useCase.archive("BU1");
 
-        verify(warehouseStore).remove(warehouse);
+        verify(warehouseStore).update(warehouse);
     }
 
     @Test

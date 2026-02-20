@@ -2,9 +2,10 @@ package com.fulfilment.application.monolith.fulfillment;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.fulfilment.application.monolith.fulfillment.adapters.database.DbFulfillment;
+import com.fulfilment.application.monolith.fulfillment.domain.usecases.AssociateFulfillmentUseCase;
 import com.fulfilment.application.monolith.products.Product;
 import com.fulfilment.application.monolith.products.ProductRepository;
 import com.fulfilment.application.monolith.stores.Store;
@@ -21,12 +22,14 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @TestTransaction
-class FulfillmentServiceTest {
+class AssociateFulfillmentUseCaseTest {
 
     @Inject
-    FulfillmentService fulfillmentService;
+    AssociateFulfillmentUseCase associateFulfillmentUseCase;
+
     @Inject
     ProductRepository productRepository;
+
     @Inject
     WarehouseRepository warehouseRepository;
 
@@ -36,9 +39,11 @@ class FulfillmentServiceTest {
         Product product = createProduct("Prod1");
         DbWarehouse warehouse = createWarehouse("WH1");
 
-        assertDoesNotThrow(() -> fulfillmentService.associate(store.id, product.id, warehouse.businessUnitCode));
+        assertDoesNotThrow(
+                () -> associateFulfillmentUseCase.associate(store.id, product.id, warehouse.businessUnitCode));
 
-        assertEquals(1, Fulfillment.count("store = ?1 and product = ?2 and warehouse = ?3", store, product, warehouse));
+        assertEquals(1,
+                DbFulfillment.count("store = ?1 and product = ?2 and warehouse = ?3", store, product, warehouse));
     }
 
     @Test
@@ -49,14 +54,12 @@ class FulfillmentServiceTest {
         DbWarehouse wh2 = createWarehouse("WH3");
         DbWarehouse wh3 = createWarehouse("WH4");
 
-        fulfillmentService.associate(store.id, product.id, wh1.businessUnitCode);
-        fulfillmentService.associate(store.id, product.id, wh2.businessUnitCode);
+        associateFulfillmentUseCase.associate(store.id, product.id, wh1.businessUnitCode);
+        associateFulfillmentUseCase.associate(store.id, product.id, wh2.businessUnitCode);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            fulfillmentService.associate(store.id, product.id, wh3.businessUnitCode);
+        assertThrows(IllegalArgumentException.class, () -> {
+            associateFulfillmentUseCase.associate(store.id, product.id, wh3.businessUnitCode);
         });
-
-        // Check message if necessary, or just rely on exception type
     }
 
     @Transactional
@@ -87,7 +90,6 @@ class FulfillmentServiceTest {
         w.stock = 0;
         w.createdAt = LocalDateTime.now();
         warehouseRepository.create(w);
-        // Fetch DbWarehouse entity created by repo
         return warehouseRepository.find("businessUnitCode", buCode).firstResult();
     }
 }

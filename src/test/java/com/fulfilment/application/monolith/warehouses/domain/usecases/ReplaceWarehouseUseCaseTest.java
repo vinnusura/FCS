@@ -75,10 +75,14 @@ public class ReplaceWarehouseUseCaseTest {
         Warehouse oldWarehouse = new Warehouse();
         oldWarehouse.businessUnitCode = "OLD";
         oldWarehouse.stock = 100;
+        oldWarehouse.location = "LOC1";
+        oldWarehouse.capacity = 100;
 
         Warehouse newWarehouse = new Warehouse();
         newWarehouse.businessUnitCode = "OLD";
         newWarehouse.capacity = 99;
+        newWarehouse.location = "LOC1";
+        newWarehouse.stock = 100; // Match existing stock
 
         when(warehouseStore.findByBusinessUnitCode("OLD")).thenReturn(oldWarehouse);
 
@@ -90,11 +94,14 @@ public class ReplaceWarehouseUseCaseTest {
         Warehouse oldWarehouse = new Warehouse();
         oldWarehouse.businessUnitCode = "OLD";
         oldWarehouse.stock = 100;
+        oldWarehouse.location = "LOC1";
+        oldWarehouse.capacity = 100;
 
         Warehouse newWarehouse = new Warehouse();
         newWarehouse.businessUnitCode = "OLD";
         newWarehouse.capacity = 100;
-        newWarehouse.stock = 99;
+        newWarehouse.stock = 99; // Mismatched stock
+        newWarehouse.location = "LOC1";
 
         when(warehouseStore.findByBusinessUnitCode("OLD")).thenReturn(oldWarehouse);
 
