@@ -1,0 +1,15 @@
+com/fulfilment/application/monolith/warehouses/domain/usecases/ArchiveWarehouseUseCaseTest.class
+com/fulfilment/application/monolith/fulfillment/AssociateFulfillmentUseCaseTest.class
+com/fulfilment/application/monolith/products/ProductEndpointTest.class
+com/fulfilment/application/monolith/location/LocationGatewayTest.class
+com/fulfilment/application/monolith/fulfillment/adapters/restapi/FulfillmentResourceTest.class
+com/fulfilment/application/monolith/products/ProductRepositoryTest.class
+com/fulfilment/application/monolith/warehouses/domain/usecases/ReplaceWarehouseUseCaseTest.class
+com/fulfilment/application/monolith/stores/LegacyStoreManagerGatewayTest.class
+com/fulfilment/application/monolith/stores/StoreResourceTest.class
+com/fulfilment/application/monolith/products/ProductResourceTest.class
+com/fulfilment/application/monolith/warehouses/adapters/database/WarehouseRepositoryTest.class
+com/fulfilment/application/monolith/warehouses/domain/usecases/CreateWarehouseUseCaseTest.class
+com/fulfilment/application/monolith/fulfillment/AssociateFulfillmentUseCaseIT.class
+com/fulfilment/application/monolith/exceptions/ErrorModelsTest.class
+com/fulfilment/application/monolith/warehouses/domain/models/LocationTest.class

@@ -1,0 +1,16 @@
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/warehouses/domain/models/LocationTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/warehouses/domain/usecases/CreateWarehouseUseCaseTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/warehouses/adapters/database/WarehouseRepositoryTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/products/ProductResourceTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/products/ProductRepositoryTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/fulfillment/AssociateFulfillmentUseCaseTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/location/LocationGatewayTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/fulfillment/adapters/restapi/FulfillmentResourceTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/products/ProductEndpointTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/warehouses/domain/usecases/ReplaceWarehouseUseCaseTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/fulfillment/AssociateFulfillmentUseCaseIT.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/exceptions/ErrorModelsTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/stores/LegacyStoreManagerGatewayTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/stores/StoreResourceTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/warehouses/adapters/restapi/WarehouseResourceImplTest.java
+/Users/vishnuvardhanreddy/Downloads/FCS-main/src/test/java/com/fulfilment/application/monolith/warehouses/domain/usecases/ArchiveWarehouseUseCaseTest.java

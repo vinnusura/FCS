@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WarehouseRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">java-code-assignment</a> &gt; <a href="index.source.html" class="el_package">com.fulfilment.application.monolith.warehouses.adapters.database</a> &gt; <span class="el_source">WarehouseRepository.java</span></div><h1>WarehouseRepository.java</h1><pre class="source lang-java linenums">package com.fulfilment.application.monolith.warehouses.adapters.database;
+
+import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import java.util.List;
+
+@ApplicationScoped
+<span class="fc" id="L10">public class WarehouseRepository implements WarehouseStore, PanacheRepository&lt;DbWarehouse&gt; {</span>
+
+  @Override
+  public List&lt;Warehouse&gt; getAll() {
+<span class="nc" id="L14">    return this.listAll().stream().map(DbWarehouse::toWarehouse).toList();</span>
+  }
+
+  @Override
+  public void create(Warehouse warehouse) {
+<span class="fc" id="L19">    DbWarehouse dbWarehouse = new DbWarehouse();</span>
+<span class="fc" id="L20">    dbWarehouse.businessUnitCode = warehouse.businessUnitCode;</span>
+<span class="fc" id="L21">    dbWarehouse.location = warehouse.location;</span>
+<span class="fc" id="L22">    dbWarehouse.capacity = warehouse.capacity;</span>
+<span class="fc" id="L23">    dbWarehouse.stock = warehouse.stock;</span>
+<span class="fc" id="L24">    dbWarehouse.createdAt = warehouse.createdAt;</span>
+<span class="fc" id="L25">    dbWarehouse.archivedAt = warehouse.archivedAt;</span>
+<span class="fc" id="L26">    this.persist(dbWarehouse);</span>
+<span class="fc" id="L27">  }</span>
+
+  @Override
+  public void update(Warehouse warehouse) {
+<span class="fc" id="L31">    DbWarehouse dbWarehouse = find(&quot;businessUnitCode&quot;, warehouse.businessUnitCode).firstResult();</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">    if (dbWarehouse != null) {</span>
+<span class="fc" id="L33">      dbWarehouse.location = warehouse.location;</span>
+<span class="fc" id="L34">      dbWarehouse.capacity = warehouse.capacity;</span>
+<span class="fc" id="L35">      dbWarehouse.stock = warehouse.stock;</span>
+      // createAt should not change
+<span class="fc" id="L37">      dbWarehouse.archivedAt = warehouse.archivedAt;</span>
+<span class="fc" id="L38">      this.persist(dbWarehouse);</span>
+    } else {
+<span class="nc" id="L40">      create(warehouse);</span>
+    }
+<span class="fc" id="L42">  }</span>
+
+  @Override
+  public void remove(Warehouse warehouse) {
+<span class="fc" id="L46">    delete(&quot;businessUnitCode&quot;, warehouse.businessUnitCode);</span>
+<span class="fc" id="L47">  }</span>
+
+  @Override
+  public Warehouse findById(String id) {
+<span class="fc" id="L51">    DbWarehouse dbWarehouse = find(&quot;businessUnitCode&quot;, id).firstResult();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">    return dbWarehouse != null ? dbWarehouse.toWarehouse() : null;</span>
+  }
+
+  @Override
+  public List&lt;Warehouse&gt; getByLocation(String location) {
+<span class="fc" id="L57">    return find(&quot;location&quot;, location).stream().map(DbWarehouse::toWarehouse).toList();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

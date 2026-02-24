@@ -5,26 +5,21 @@ import static org.mockito.Mockito.*;
 
 import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
-import org.junit.jupiter.api.BeforeEach;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fulfilment.application.monolith.exceptions.WarehouseException;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 public class ArchiveWarehouseUseCaseTest {
 
-    @Mock
-    private WarehouseStore warehouseStore;
+    @InjectMock
+    WarehouseStore warehouseStore;
 
-    private ArchiveWarehouseUseCase useCase;
-
-    @BeforeEach
-    void setUp() {
-        useCase = new ArchiveWarehouseUseCase(warehouseStore);
-    }
+    @Inject
+    ArchiveWarehouseUseCase useCase;
 
     @Test
     void archive_Success() {

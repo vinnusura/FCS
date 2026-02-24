@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FulfillmentRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">java-code-assignment</a> &gt; <a href="index.source.html" class="el_package">com.fulfilment.application.monolith.fulfillment.adapters.database</a> &gt; <span class="el_source">FulfillmentRepository.java</span></div><h1>FulfillmentRepository.java</h1><pre class="source lang-java linenums">package com.fulfilment.application.monolith.fulfillment.adapters.database;
+
+import com.fulfilment.application.monolith.fulfillment.domain.models.Fulfillment;
+import com.fulfilment.application.monolith.fulfillment.domain.ports.FulfillmentStore;
+import com.fulfilment.application.monolith.products.Product;
+import com.fulfilment.application.monolith.stores.Store;
+import com.fulfilment.application.monolith.warehouses.adapters.database.DbWarehouse;
+import com.fulfilment.application.monolith.warehouses.adapters.database.WarehouseRepository;
+import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+
+@ApplicationScoped
+<span class="fc" id="L16">public class FulfillmentRepository implements FulfillmentStore, PanacheRepository&lt;DbFulfillment&gt; {</span>
+
+    @Inject
+    WarehouseRepository warehouseRepository;
+
+    @Inject
+    EntityManager entityManager;
+
+    @Override
+    public void create(Fulfillment fulfillment) {
+        // We need the DbWarehouse entity to persist DbFulfillment
+        // Ideally domain model should hold enough info, but here we need relational
+        // mapping.
+        // Since we are inside adapter, we can use other adapters or repositories.
+<span class="fc" id="L30">        DbWarehouse dbWarehouse = warehouseRepository.find(&quot;businessUnitCode&quot;, fulfillment.warehouse.businessUnitCode)</span>
+<span class="fc" id="L31">                .firstResult();</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">        if (dbWarehouse == null) {</span>
+<span class="nc" id="L33">            throw new IllegalArgumentException(</span>
+                    &quot;Warehouse not found for persistence: &quot; + fulfillment.warehouse.businessUnitCode);
+        }
+
+<span class="fc" id="L37">        DbFulfillment entity = DbFulfillment.fromDomain(fulfillment, dbWarehouse);</span>
+<span class="fc" id="L38">        entity.persist();</span>
+<span class="fc" id="L39">    }</span>
+
+    @Override
+    public long countByStoreAndProductAndWarehouse(Store store, Product product, Warehouse warehouse) {
+<span class="fc" id="L43">        DbWarehouse dbWarehouse = warehouseRepository.find(&quot;businessUnitCode&quot;, warehouse.businessUnitCode)</span>
+<span class="fc" id="L44">                .firstResult();</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (dbWarehouse == null)</span>
+<span class="nc" id="L46">            return 0;</span>
+
+<span class="fc" id="L48">        return DbFulfillment.count(&quot;store = ?1 and product = ?2 and warehouse = ?3&quot;, store, product, dbWarehouse);</span>
+    }
+
+    @Override
+    public long countByStoreAndProduct(Store store, Product product) {
+<span class="fc" id="L53">        return DbFulfillment.count(&quot;store = ?1 and product = ?2&quot;, store, product);</span>
+    }
+
+    @Override
+    public long countByStoreAndWarehouse(Store store, Warehouse warehouse) {
+<span class="fc" id="L58">        DbWarehouse dbWarehouse = warehouseRepository.find(&quot;businessUnitCode&quot;, warehouse.businessUnitCode)</span>
+<span class="fc" id="L59">                .firstResult();</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if (dbWarehouse == null)</span>
+<span class="nc" id="L61">            return 0;</span>
+
+<span class="fc" id="L63">        return DbFulfillment.count(&quot;store = ?1 and warehouse = ?2&quot;, store, dbWarehouse);</span>
+    }
+
+    @Override
+    public long countDistinctWarehousesByStore(Store store) {
+<span class="fc" id="L68">        return entityManager.createQuery(</span>
+                &quot;SELECT COUNT(DISTINCT f.warehouse) FROM DbFulfillment f WHERE f.store = :store&quot;, Long.class)
+<span class="fc" id="L70">                .setParameter(&quot;store&quot;, store)</span>
+<span class="fc" id="L71">                .getSingleResult();</span>
+    }
+
+    @Override
+    public long countByWarehouseAndProduct(Warehouse warehouse, Product product) {
+<span class="fc" id="L76">        DbWarehouse dbWarehouse = warehouseRepository.find(&quot;businessUnitCode&quot;, warehouse.businessUnitCode)</span>
+<span class="fc" id="L77">                .firstResult();</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (dbWarehouse == null)</span>
+<span class="nc" id="L79">            return 0;</span>
+<span class="fc" id="L80">        return DbFulfillment.count(&quot;warehouse = ?1 and product = ?2&quot;, dbWarehouse, product);</span>
+    }
+
+    @Override
+    public long countDistinctProductsByWarehouse(Warehouse warehouse) {
+<span class="fc" id="L85">        DbWarehouse dbWarehouse = warehouseRepository.find(&quot;businessUnitCode&quot;, warehouse.businessUnitCode)</span>
+<span class="fc" id="L86">                .firstResult();</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (dbWarehouse == null)</span>
+<span class="nc" id="L88">            return 0;</span>
+
+<span class="fc" id="L90">        return entityManager.createQuery(</span>
+                &quot;SELECT COUNT(DISTINCT f.product) FROM DbFulfillment f WHERE f.warehouse = :warehouse&quot;, Long.class)
+<span class="fc" id="L92">                .setParameter(&quot;warehouse&quot;, dbWarehouse)</span>
+<span class="fc" id="L93">                .getSingleResult();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -8,6 +8,9 @@ import com.fulfilment.application.monolith.warehouses.domain.ports.ArchiveWareho
 import com.fulfilment.application.monolith.warehouses.domain.ports.CreateWarehouseOperation;
 import com.fulfilment.application.monolith.warehouses.domain.ports.ReplaceWarehouseOperation;
 import com.fulfilment.application.monolith.warehouses.adapters.database.WarehouseRepository;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import com.fulfilment.application.monolith.exceptions.WarehouseException;
@@ -15,25 +18,24 @@ import static com.fulfilment.application.monolith.exceptions.ErrorRule.WAREHOUSE
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class WarehouseResourceImplTest {
 
-    @Mock
-    private WarehouseRepository warehouseRepository;
-    @Mock
-    private CreateWarehouseOperation createWarehouseOperation;
-    @Mock
-    private ReplaceWarehouseOperation replaceWarehouseOperation;
-    @Mock
-    private ArchiveWarehouseOperation archiveWarehouseOperation;
+    @InjectMock
+    WarehouseRepository warehouseRepository;
 
-    @InjectMocks
-    private WarehouseResourceImpl resource;
+    @InjectMock
+    CreateWarehouseOperation createWarehouseOperation;
+
+    @InjectMock
+    ReplaceWarehouseOperation replaceWarehouseOperation;
+
+    @InjectMock
+    ArchiveWarehouseOperation archiveWarehouseOperation;
+
+    @Inject
+    WarehouseResourceImpl resource;
 
     @Test
     void createANewWarehouseUnit_Success() {

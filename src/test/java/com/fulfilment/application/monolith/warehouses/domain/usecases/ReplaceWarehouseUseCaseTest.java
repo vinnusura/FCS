@@ -9,29 +9,26 @@ import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
 import com.fulfilment.application.monolith.warehouses.domain.ports.ArchiveWarehouseOperation;
 import com.fulfilment.application.monolith.warehouses.domain.ports.LocationResolver;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
-import org.junit.jupiter.api.BeforeEach;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 public class ReplaceWarehouseUseCaseTest {
 
-    @Mock
-    private WarehouseStore warehouseStore;
-    @Mock
-    private LocationResolver locationResolver;
-    @Mock
-    private ArchiveWarehouseOperation archiveWarehouseOperation;
+    @InjectMock
+    WarehouseStore warehouseStore;
 
-    private ReplaceWarehouseUseCase useCase;
+    @InjectMock
+    LocationResolver locationResolver;
 
-    @BeforeEach
-    void setUp() {
-        useCase = new ReplaceWarehouseUseCase(warehouseStore, archiveWarehouseOperation, locationResolver);
-    }
+    @InjectMock
+    ArchiveWarehouseOperation archiveWarehouseOperation;
+
+    @Inject
+    ReplaceWarehouseUseCase useCase;
 
     @Test
     void replace_Success() {
